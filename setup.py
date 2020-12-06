@@ -8,7 +8,7 @@ setup(
 	name='contextlogger',
 	version='0.0.1',
 	description='A logging boilerplate enhanced by the use of contextvars',
-	py_module=['contextlogger'],
+	py_modules=['contextlogger'],
 	package_dir={'': 'src'},
 	classifiers=[
 		"Programming Language :: Python :: 3",

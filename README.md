@@ -26,7 +26,7 @@ where your **main.py** is simply running the two tasks defined in your runner.py
 """ main.py """
 import asyncio
 
-from my_app.runner.py import task1, task2
+from my_app.runner import task1, task2
 
 
 async def main():
@@ -195,7 +195,7 @@ def test():
 
 Now, if we call our test function inside the task1 of our **runner.py**:
 
-```
+```python
 from uuid import uuid4
 
 from contextlogger import CLogVar
@@ -228,7 +228,7 @@ async def task2():
 	clogger.info(f"Hello from {task2.__name__}")
 ```
 
-we should see that the log line that is printed inside our **another_module.py** has the same uuid with the log line that is printed in task1>
+we should see that the log line that is printed inside our **another_module.py** has the same uuid with the log line that is printed in task1
 
 ```
 2020-12-06 18:33:36,634 INFO my_app {'request_id': '1eff5e40-4b05-4cd1-bd9c-edbee85d2995', 'static': 1} Hello from task1
