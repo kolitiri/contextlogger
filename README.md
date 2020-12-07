@@ -2,6 +2,8 @@
 
 A simple logger that uses the contexvars library to inject extra details in your logs.
 
+**Source Code**: https://github.com/kolitiri/contextlogger
+
 ## Installation
 ```python
 pip install contextlogger
@@ -172,7 +174,7 @@ And here we are, with something a lot more useful than just a static value:
 2020-12-06 18:21:17,626 INFO my_app {'request_id': '6d4cdab2-e24b-481b-b54b-12c6ee9bcc1b', 'static': 2} Hello from task2
 ```
 
-Finally, let's add an extra module just for sake of it.
+Finally, let's add an extra module just for the sake of it.
 
 Now our directory will look like:
 ```
@@ -237,7 +239,8 @@ we should see that the log line that is printed inside our **another_module.py**
 ```
 
 ## Contribute
-I am currently working on the contributions documentation so for now, if you would like to create a pull request drop me a message on instagram.
+If you want to contribute to the package, please have a look at the CONTRIBUTING.md file for some basic instructions.
+Feel free to reach me in my email or my twitter account, listed in my github profile!
 
 ## Authors
 Christos Liontos

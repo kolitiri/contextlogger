@@ -1,14 +1,14 @@
 class ClogVarError(Exception):
-	pass
+    pass
 
 class ClogVarSetError(ClogVarError):
-	pass
+    pass
 
 class ClogVarArgumentError(ClogVarError):
-	pass
+    pass
 
 class CLoggerError(Exception):
-	pass
+    pass
 
 class CLoggerArgumentError(CLoggerError):
-	pass
+    pass
