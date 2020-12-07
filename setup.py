@@ -6,7 +6,7 @@ with open('README.md', 'r') as fh:
 
 setup(
 	name='contextlogger',
-	version='0.0.5',
+	version='0.0.6',
 	description='A logging boilerplate enhanced by the use of contextvars',
 	py_modules=['contextlogger', 'exceptions'],
 	package_dir={'': 'src'},
