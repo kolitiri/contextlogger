@@ -321,5 +321,8 @@ we should see that the log line that is printed inside our **another_module.py**
 If you want to contribute to the package, please have a look at the CONTRIBUTING.md file for some basic instructions.
 Feel free to reach me in my email or my twitter account, which you can find in my github profile!
 
+# License
+This project is licensed under the terms of the MIT license.
+
 # Authors
 Christos Liontos
