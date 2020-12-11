@@ -10,6 +10,7 @@
     * [Logging with static context](#logging-with-static-context)
     * [Logging with dynamic context](#logging-with-dymanic-context)
     * [Logging with context in multiple modules](#logging-multiple)
+    * [Structured logging](#structured-logging)
 6. [Contributions](#contributions)
 
 
@@ -316,6 +317,54 @@ we should see that the log line that is printed inside our **another_module.py**
 2020-12-06 18:33:36,635 INFO my_app {'request_id': '1eff5e40-4b05-4cd1-bd9c-edbee85d2995', 'static': 1} Hello from another_module
 2020-12-06 18:33:36,635 INFO my_app {'request_id': 'ec68779f-46f6-4ea0-a003-9ddb053887e1', 'static': 2} Hello from task2
 ```
+
+## Structured logging <a name="structured-logging"></a>
+
+If you prefer structured logging, you can create the **clogger** instance using the 'structured' argument, which will cause the message to be printed in a structured format.
+
+Then, just change your formatter accordingly.
+
+```python
+
+""" __init__.py """
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import os
+
+
+import contextlogger
+
+# Create a CLogger instance
+clogger = contextlogger.getCLogger(__name__, structured=True)
+
+# Create a logging formatter
+logging_format = "{'time': '%(asctime)s', 'level': '%(levelname)s', 'name': '%(name)s', %(message)s}"
+formatter = logging.Formatter(logging_format)
+
+# Create handlers for console logger
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+clogger.addHandler(console_handler)
+
+# Create handlers for file logger
+LOG_DIR = 'logs'
+APP = 'MY-APP'
+if not os.path.exists(LOG_DIR):
+	os.makedirs(LOG_DIR)
+
+file_handler = TimedRotatingFileHandler(f"{LOG_DIR}/{APP}.log", when="midnight", interval=1)
+file_handler.setFormatter(formatter)
+file_handler.suffix = "%Y%m%d"
+clogger.addHandler(file_handler)
+```
+The output result will become:
+
+```
+{'time': '2020-12-11 15:52:11,487', 'level': 'INFO', 'name': 'my_app', 'msg': 'Hello from task1', 'static': '1', 'request_id': 'cc75cb8f-f267-4406-b49c-fc2196a686c6'}
+{'time': '2020-12-11 15:52:11,487', 'level': 'INFO', 'name': 'my_app', 'msg': 'Hello from another_module', 'static': '1', 'request_id': 'cc75cb8f-f267-4406-b49c-fc2196a686c6'}
+{'time': '2020-12-11 15:52:11,487', 'level': 'INFO', 'name': 'my_app', 'msg': 'Hello from task2', 'static': '2', 'request_id': '7117cdb4-a0dd-4e12-89a5-756a03d7f8b1'}
+```
+
 
 # Contributions  <a name="contributions"></a>
 If you want to contribute to the package, please have a look at the CONTRIBUTING.md file for some basic instructions.
