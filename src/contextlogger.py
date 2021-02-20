@@ -4,6 +4,7 @@ import logging
 from typing import (
     Any,
     Dict,
+    List,
     Optional,
     Tuple,
 )
@@ -65,9 +66,9 @@ class CLogVar():
 
 class CLoggingAdapter(logging.LoggerAdapter):
     """ Custom logging adapter. """
-    def __init__(self, logger: logging.Logger, extra: dict, structured: Optional[bool] = False):
+    def __init__(self, logger: logging.Logger, structured: Optional[bool] = False):
         self.structured = structured
-        super().__init__(logger, extra)
+        super().__init__(logger, extra={})
 
     def process(self, msg: str, kwargs: dict) -> Tuple[str, dict]:
         """ Processes the message passed to the logger,
@@ -87,27 +88,30 @@ class CLoggingAdapter(logging.LoggerAdapter):
             if clogvar.get()
         }
 
-        message = None
-
-        if self.structured:
-            message = f"'msg': '{msg}'"
-            for k, v in clogvars.items():
-                message += f", '{k}': '{v}'"
-
-        else:
-            if clogvars:
-                message = f"{clogvars} - {msg}"
-            else:
-                message = f"{msg}"
+        message = self._format_msg(msg, clogvars)
 
         return message, kwargs
+
+    def _format_msg(self, msg: str, clogvars: Dict[str, CLogVar]) -> str:
+        """ Formats the message accordingly. """
+        if self.structured:
+            msg = f"'msg': '{msg}'"
+            for var_name, var_val in clogvars.items():
+                msg += f", '{var_name}': '{var_val}'"
+        else:
+            if clogvars:
+                msg = f"{clogvars} - {msg}"
+
+        return msg
+
 
 
 class CLogger():
     """ Class representing a context logger. """
+
     def __init__(self, name: str , level: Optional[str] = 'INFO', structured: Optional[bool] = False):
         self.logger = logging.getLogger(name)
-        self.clogger = CLoggingAdapter(logger=self.logger, extra={}, structured=structured)
+        self.clogger = CLoggingAdapter(logger=self.logger, structured=structured)
         self.clogger.setLevel(level)
         self.cvars = {}
 

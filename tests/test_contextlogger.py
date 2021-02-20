@@ -71,3 +71,36 @@ class TestCLogVar():
         cvar = contextlogger.CLogVar(name='request_id', setter=lambda: 1)
         cvar.set()
         assert cvar.get() == 1
+
+
+class TestCLoggingAdapter():
+
+    def setup_class(self):
+        # Create a Logger instance
+        self.logger = logging.getLogger(__name__)
+
+    def test_format_msg_structured(self):
+        """ Asserts adapter produces structured message """
+        adapter = contextlogger.CLoggingAdapter(logger=self.logger, structured=True)
+
+        clogvars = {
+            'static': 1
+        }
+
+        msg = "A test message"
+        msg = adapter._format_msg(msg, clogvars)
+
+        assert msg == "'msg': 'A test message', 'static': '1'"
+
+    def test_format_msg_not_structured(self):
+        """ Asserts adapter produces non-structured message """
+        adapter = contextlogger.CLoggingAdapter(logger=self.logger, structured=False)
+
+        clogvars = {
+            'static': 1
+        }
+
+        msg = "A test message"
+        msg = adapter._format_msg(msg, clogvars)
+
+        assert msg == "{'static': 1} - A test message"
