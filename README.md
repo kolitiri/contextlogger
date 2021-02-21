@@ -11,7 +11,8 @@
     * [Logging with dynamic context](#logging-with-dymanic-context)
     * [Logging with context in multiple modules](#logging-multiple)
     * [Structured logging](#structured-logging)
-6. [Contributions](#contributions)
+6. [Version Updates](#versionupdates)
+7. [Contributions](#contributions)
 
 
 # Description <a name="description"></a>
@@ -37,7 +38,7 @@ import asyncio
 import logging
 from uuid import uuid4
 
-from contextlogger import CLogVar, getCLogger
+from contextlogger import CLogVars, CLogVar, getCLogger
 
 
 # Create and configure a CLogger instance
@@ -46,11 +47,11 @@ console_handler = logging.StreamHandler()
 clogger.addHandler(console_handler)
 clogger.setLevel('DEBUG')
 
-# Create a list with static or dynamic context variables
-clogger.clogvars = [
-    CLogVar(name='static'),
-    CLogVar(name='request_id', setter=lambda: str(uuid4())),
-]
+# Create a CLogVar container with static or dynamic context variables
+clogger.clogvars = CLogVar(
+    static=CLogVar(name='static'),
+    request_id=CLogVar(name='request_id', setter=lambda: str(uuid4())),
+)
 
 async def my_func():
     # Set the value of your static variable
@@ -183,12 +184,12 @@ Let's add a 'static' attribute... Not very useful but why not!
 
 ```python
 """ runner.py """
-from contextlogger import CLogVar
+from contextlogger import CLogVars, CLogVar
 from my_app import clogger
 
-clogger.clogvars = [
-	CLogVar(name='static'),
-]
+clogger.clogvars = CLogVars(
+	static=CLogVar(name='static'),
+)
 
 async def task1():
     # Set our 'static' value for task1
@@ -218,13 +219,13 @@ Now, things get interesting! Our CLogVar can also accept a 'setter' argument whi
 ```python
 from uuid import uuid4
 
-from contextlogger import CLogVar
+from contextlogger import CLogVars, CLogVar
 from my_app import clogger
 
-clogger.clogvars = [
-	CLogVar(name='static'),
-	CLogVar(name='request_id', setter=lambda: str(uuid4())),
-]
+clogger.clogvars = CLogVars(
+	static=CLogVar(name='static'),
+	request_id=CLogVar(name='request_id', setter=lambda: str(uuid4())),
+)
 
 async def task1():
 	# Set our 'static' value for task1
@@ -280,14 +281,14 @@ Now, if we call our test function inside the task1 of our **runner.py**:
 ```python
 from uuid import uuid4
 
-from contextlogger import CLogVar
+from contextlogger import CLogVars, CLogVar
 from my_app import clogger
 from my_app.another_module import test
 
-clogger.clogvars = [
-	CLogVar(name='static'),
-	CLogVar(name='request_id', setter=lambda: str(uuid4())),
-]
+clogger.clogvars = CLogVars(
+	static=CLogVar(name='static'),
+	request_id=CLogVar(name='request_id', setter=lambda: str(uuid4())),
+)
 
 async def task1():
 	# Set our 'static' value for task1
@@ -365,6 +366,8 @@ The output result will become:
 {'time': '2020-12-11 15:52:11,487', 'level': 'INFO', 'name': 'my_app', 'msg': 'Hello from task2', 'static': '2', 'request_id': '7117cdb4-a0dd-4e12-89a5-756a03d7f8b1'}
 ```
 
+# Version Updates  <a name="versionupdates"></a>
+**1.0.0**: Introduces breaking changes. CLogger.clogvars has been converted from a List to a custom UserDict to maintain consistency between get/set functionality.
 
 # Contributions  <a name="contributions"></a>
 If you want to contribute to the package, please have a look at the CONTRIBUTING.md file for some basic instructions.
