@@ -3,40 +3,42 @@ from logging.handlers import TimedRotatingFileHandler
 import os
 import pytest
 
-import contextlogger
+from contextlogger import (
+    CLoggingAdapter,
+    CLogVars,
+    CLogVar,
+    getCLogger,
+)
 import exceptions
 
 
 class TestCLogger():
 
     def setup_class(self):
-        # Create a CLogger instance
-        self.clogger = contextlogger.getCLogger(__name__)
+        self.clogger = getCLogger(__name__)
 
-        # Create a logging formatter
         logging_format = "%(asctime)s %(levelname)s %(name)s %(message)s"
         formatter = logging.Formatter(logging_format)
 
-        # Create handlers for console logger
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         self.clogger.addHandler(console_handler)
 
     def test_clogvars_invalid(self):
-        """ Asserts clogvars is in the correct format """
-        with pytest.raises(exceptions.CLoggerArgumentError):
+        """ Asserts clogvars does not accept the wrong types """
+        with pytest.raises(TypeError):
             self.clogger.clogvars = "Not a list of CLogVar instances"
 
-        with pytest.raises(exceptions.CLoggerArgumentError):
+        with pytest.raises(TypeError):
             self.clogger.clogvars = [
                 "Not a CLogVar instance",
             ]
 
     def test_setvar(self):
         """ Asserts setvar works as expected """
-        self.clogger.clogvars = [
-            contextlogger.CLogVar(name='static'),
-        ]
+        self.clogger.clogvars = CLogVars(
+            static=CLogVar(name='static'),
+        )
 
         self.clogger.setvar('static', value=1)
 
@@ -44,9 +46,9 @@ class TestCLogger():
 
     def test_getvar_unknown(self):
         """ Asserts getvars returns None when the context variable is not set """
-        self.clogger.clogvars = [
-            contextlogger.CLogVar(name='static'),
-        ]
+        self.clogger.clogvars = CLogVars(
+            static=CLogVar(name='static'),
+        )
 
         self.clogger.setvar('static', value=1)
 
@@ -56,19 +58,23 @@ class TestCLogger():
 class TestCLogVar():
 
     def test_set_value(self):
-        cvar = contextlogger.CLogVar(name='static')
-        with pytest.raises(exceptions.ClogVarSetError):
-            cvar.set()
+        """ Asserts cvar values are set as expected """
+        cvar = CLogVar(name='static')
+
+        cvar.set()
+        assert cvar.get() == None
 
         cvar.set(1)
         assert cvar.get() == 1
 
     def test_set_setter(self):
-        cvar = contextlogger.CLogVar(name='request_id', setter=1)
-        with pytest.raises(exceptions.ClogVarSetError):
+        """ Asserts scvar etter behaves as expected when it is a callable or not """
+        cvar = CLogVar(name='request_id', setter=1)
+
+        with pytest.raises(TypeError):
             cvar.set()
 
-        cvar = contextlogger.CLogVar(name='request_id', setter=lambda: 1)
+        cvar = CLogVar(name='request_id', setter=lambda: 1)
         cvar.set()
         assert cvar.get() == 1
 
@@ -76,12 +82,11 @@ class TestCLogVar():
 class TestCLoggingAdapter():
 
     def setup_class(self):
-        # Create a Logger instance
         self.logger = logging.getLogger(__name__)
 
     def test_format_msg_structured(self):
-        """ Asserts adapter produces structured message """
-        adapter = contextlogger.CLoggingAdapter(logger=self.logger, structured=True)
+        """ Asserts the adapter produces structured message """
+        adapter = CLoggingAdapter(logger=self.logger, structured=True)
 
         clogvars = {
             'static': 1
@@ -93,8 +98,8 @@ class TestCLoggingAdapter():
         assert msg == "'msg': 'A test message', 'static': '1'"
 
     def test_format_msg_not_structured(self):
-        """ Asserts adapter produces non-structured message """
-        adapter = contextlogger.CLoggingAdapter(logger=self.logger, structured=False)
+        """ Asserts the adapter produces non-structured message """
+        adapter = CLoggingAdapter(logger=self.logger, structured=False)
 
         clogvars = {
             'static': 1
