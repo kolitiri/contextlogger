@@ -47,8 +47,8 @@ console_handler = logging.StreamHandler()
 clogger.addHandler(console_handler)
 clogger.setLevel('DEBUG')
 
-# Create a CLogVar container with static or dynamic context variables
-clogger.clogvars = CLogVar(
+# Create a CLogVars container with static or dynamic context variables
+clogger.clogvars = CLogVars(
     static=CLogVar(name='static'),
     request_id=CLogVar(name='request_id', setter=lambda: str(uuid4())),
 )
@@ -178,7 +178,7 @@ As expected, if you run your **main.py** the output of the clogger will be:
 
 Now lets add some context to our logging.
 
-We can do that by adding a list of **CLogVar** (context log variables) to our logger.
+We can do that by adding a custom UserDict (CLogVars) of **CLogVar** (context log variables) to our logger.
 
 Let's add a 'static' attribute... Not very useful but why not!
 
