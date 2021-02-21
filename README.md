@@ -17,7 +17,9 @@
 
 # Description <a name="description"></a>
 
-A simple logger that uses the [contextvars](https://docs.python.org/3/library/contextvars.html) library to inject contextual details in your logs.
+A simple logger that leverages the power of the [contextvars](https://docs.python.org/3/library/contextvars.html) library to inject contextual details in your logs.
+
+It exposes a simple interface, similar to the standard logging.[Logger](https://docs.python.org/3/library/logging.html) and it supports **Structured** logging for more advanced use cases.
 
 **Source Code**: https://github.com/kolitiri/contextlogger
 

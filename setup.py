@@ -16,7 +16,7 @@ setup(
 		"License :: OSI Approved :: MIT License",
 		"Operating System :: OS Independent",
 	],
-	keywords='logging context',
+	keywords='logging context structured',
 	project_urls={
 		'Source': 'https://github.com/kolitiri/contextlogger',
 		'Tracker': 'https://github.com/kolitiri/contextlogger/issues',
