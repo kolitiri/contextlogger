@@ -1,18 +1,16 @@
+from collections import UserDict
 from collections.abc import Callable
 from contextvars import ContextVar
 import logging
 from typing import (
     Any,
     Dict,
+    List,
     Optional,
     Tuple,
 )
 
-from exceptions import (
-    CLoggerArgumentError,
-    ClogVarArgumentError,
-    ClogVarSetError,
-)
+from exceptions import CLogVarError
 
 
 class CLogVar():
@@ -29,15 +27,6 @@ class CLogVar():
             If a setter callable has been provided on initialization
             and no value is passed, the setter callable will attempt
             to set the value of the context variable.
-
-            Args:
-                value: The new value of the CLogVar instance
-
-            Returns:
-                value: The new value of the CLogVar instance
-
-            Raises:
-                ClogVarSetError
         """
         if value:
             self.context_var.set(value)
@@ -45,120 +34,94 @@ class CLogVar():
 
         if self.setter:
             if not callable(self.setter):
-                raise ClogVarSetError("Nothing to set")
+                _type = self.setter.__class__.__name__
+                raise TypeError(f"Setter should be a callable, not {_type}")
 
             value = self.setter()
             self.context_var.set(value)
             return value
 
-        raise ClogVarSetError("Nothing to set")
-
     def get(self) -> Any:
-        """ Returns the current value of a CLogVar instance.
-
-            Returns:
-                value: The current value of the CLogVar instance.
-        """
+        """ Returns the current value of a CLogVar instance """
         value = self.context_var.get()
         return value
 
 
+class CLogVars(UserDict):
+    """ A custom UserDict container that adds some basic validation """
+    def __setitem__(self, index, val):
+        if not isinstance(val, CLogVar):
+            _type = val.__class__.__name__
+            raise TypeError(
+                f"Items should be CLogVar instances, not {_type}"
+            )
+        super().__setitem__(index, val)
+
+
 class CLoggingAdapter(logging.LoggerAdapter):
     """ Custom logging adapter. """
-    def __init__(self, logger: logging.Logger, extra: dict, structured: Optional[bool] = False):
+    def __init__(self, logger: logging.Logger, structured: Optional[bool] = False):
         self.structured = structured
-        super().__init__(logger, extra)
+        super().__init__(logger, extra={})
 
     def process(self, msg: str, kwargs: dict) -> Tuple[str, dict]:
-        """ Processes the message passed to the logger,
-            as per logging.LoggerAdapter.
-
-            Args:
-                msg: The message passed to the logger
-                kwargs: Extra keyword arguments
-
-            Returns:
-                message: The processed message
-                kwargs: Extra keyword arguments
-        """
+        """ Processes the message passed to the logger, as per logging.LoggerAdapter """
         clogvars = {
             clogvar_name: clogvar.get()
             for clogvar_name, clogvar in self.extra.items()
             if clogvar.get()
         }
 
-        message = None
-
-        if self.structured:
-            message = f"'msg': '{msg}'"
-            for k, v in clogvars.items():
-                message += f", '{k}': '{v}'"
-
-        else:
-            if clogvars:
-                message = f"{clogvars} - {msg}"
-            else:
-                message = f"{msg}"
+        message = self._format_msg(msg, clogvars)
 
         return message, kwargs
 
+    def _format_msg(self, msg: str, clogvars: Dict[str, CLogVar]) -> str:
+        """ Formats the message accordingly. """
+        if self.structured:
+            msg = f"'msg': '{msg}'"
+            for var_name, var_val in clogvars.items():
+                msg += f", '{var_name}': '{var_val}'"
+        else:
+            if clogvars:
+                msg = f"{clogvars} - {msg}"
+
+        return msg
+
 
 class CLogger():
-    """ Class representing a context logger. """
+    """ Class representing a context logger """
     def __init__(self, name: str , level: Optional[str] = 'INFO', structured: Optional[bool] = False):
         self.logger = logging.getLogger(name)
-        self.clogger = CLoggingAdapter(logger=self.logger, extra={}, structured=structured)
+        self.clogger = CLoggingAdapter(logger=self.logger, structured=structured)
         self.clogger.setLevel(level)
-        self.cvars = {}
+        self._clogvars = CLogVars()
 
     @property
-    def clogvars(self) -> Dict[str, CLogVar]:
-        """ Returns the CLogVar instances of the current CLogger
-
-            Return:
-                cvars: A dictionary mapping names to CLogVar instances
-        """
-        cvars = self.cvars
-        return cvars
+    def clogvars(self) -> CLogVars:
+        return self._clogvars
 
     @clogvars.setter
-    def clogvars(self, cvars: Dict[str, CLogVar]):
-        """ Sets a variable number of context variables to be used
-            by the context logger.
-
-            Args:
-                cvars: Dictionary mapping names to CLogVar instances
-
-            Raises:
-                CLoggerArgumentError
-        """
-        if not isinstance(cvars, list):
-            raise CLoggerArgumentError(
-                "Argument 'cvars' should be a list of CLogVar instances"
+    def clogvars(self, cvars: CLogVars):
+        if not isinstance(cvars, CLogVars):
+            _type = cvars.__class__.__name__
+            raise TypeError(
+                f"Value should be a CLogVars instance, not {_type}"
             )
-
-        extra = {}
-        for cvar in cvars:
-            if not isinstance(cvar, CLogVar):
-                raise CLoggerArgumentError(
-                    "Argument 'cvars' should be a list of CLogVar instances"
-                )
-            extra[cvar.name] = cvar
-
-        self.cvars = extra
-        self.clogger.extra = extra
+        self._clogvars = cvars
+        self.clogger.extra = cvars.data
 
     def getvar(self, name: str) -> CLogVar:
         """ Returns the value of a CLogVar by name. """
-        cvar = self.cvars.get(name)
+        cvar = self.clogvars.get(name)
         if cvar:
             return cvar.get()
 
     def setvar(self, name: str, value: Any = None):
         """ Sets the value of a CLogVar by name. """
-        cvar = self.cvars.get(name)
+        cvar = self.clogvars.get(name)
         if cvar:
-            self.cvars[name].set(value)
+            self.clogvars[name].set(value)
 
     def addHandler(self, *args, **kwargs):
         self.logger.addHandler(*args, **kwargs)
